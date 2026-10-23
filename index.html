@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#14213d">
+  <meta name="description" content="محاسبه آخرین مهلت قانونی واخواهی، تجدیدنظر، فرجام و رفع نقص — کاملاً آفلاین و روی دستگاه شما">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="مواعد">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self'; script-src 'self'; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <title>تقویم مواعد هوشمند</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+  <link rel="preload" href="fonts/Vazirmatn-Variable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img src="icons/icon-192.png" alt="" width="34" height="34">
+      <div>
+        <h1>تقویم مواعد</h1>
+        <p class="sub" id="today-label"></p>
+      </div>
+    </div>
+    <span class="offline-pill" id="net-pill" hidden>آفلاین</span>
+  </header>
+
+  <main id="app">
+    <!-- Calculator -->
+    <section class="view" id="view-calc" data-view="calc">
+      <form class="card" id="calc-form" novalidate>
+        <label class="field">
+          <span>نوع اقدام</span>
+          <select id="rule" required></select>
+        </label>
+        <div class="field">
+          <span>محل اقامت</span>
+          <div class="seg" role="radiogroup" id="residence">
+            <button type="button" role="radio" data-val="inside" aria-checked="true">مقیم ایران</button>
+            <button type="button" role="radio" data-val="abroad" aria-checked="false">مقیم خارج از کشور</button>
+          </div>
+        </div>
+        <div class="field">
+          <span>تاریخ ابلاغ</span>
+          <button type="button" class="date-btn" id="notify-btn" aria-haspopup="dialog"><span id="notify-label">انتخاب تاریخ</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2zM5 9h14v11H5z"/></svg></button>
+        </div>
+        <details class="opts">
+          <summary>تنظیمات احتیاطی</summary>
+          <label class="switch"><input type="checkbox" id="thursday-off"><span>واحد قضایی پنجشنبه‌ها تعطیل است <small>(ماده ۴۴۴ — روز تعطیل ادارات)</small></span></label>
+          <label class="switch"><input type="checkbox" id="enotice-shift"><span>ابلاغ الکترونیکی در روز تعطیل، روز کاری بعد محسوب شود <small>(نظریه مشورتی ۷/۱۴۰۰/۶۲۷)</small></span></label>
+          <p class="hint">پیش‌فرض هر دو خاموش است تا زودترین (محتاطانه‌ترین) تاریخ نمایش داده شود.</p>
+        </details>
+        <button class="btn primary block" type="submit" id="calc-btn">محاسبه آخرین مهلت</button>
+      </form>
+      <div id="result" aria-live="polite"></div>
+    </section>
+
+    <!-- Cases -->
+    <section class="view" id="view-cases" data-view="cases" hidden>
+      <div class="row-between">
+        <h2>پرونده‌ها</h2>
+        <button class="btn small" id="new-case">+ پرونده جدید</button>
+      </div>
+      <label class="switch inline"><input type="checkbox" id="show-done"><span>نمایش موارد انجام‌شده</span></label>
+      <div id="case-list"></div>
+    </section>
+
+    <!-- Holidays -->
+    <section class="view" id="view-holidays" data-view="holidays" hidden>
+      <div class="row-between">
+        <h2>تعطیلات رسمی</h2>
+        <div class="seg compact" id="hol-year">
+          <button type="button" data-val="1405" aria-checked="true">۱۴۰۵</button>
+          <button type="button" data-val="1406" aria-checked="false">۱۴۰۶</button>
+        </div>
+      </div>
+      <div id="hol-source"></div>
+      <ul class="hol-list" id="hol-list"></ul>
+    </section>
+
+    <!-- More -->
+    <section class="view" id="view-more" data-view="more" hidden>
+      <div class="card">
+        <h3>پشتیبان‌گیری</h3>
+        <p class="hint">همه اطلاعات فقط روی همین دستگاه ذخیره می‌شود. برای انتقال یا جلوگیری از گم شدن، به‌طور منظم فایل پشتیبان بگیرید.</p>
+        <div class="btn-row">
+          <button class="btn" id="export-json">دریافت فایل پشتیبان (JSON)</button>
+          <label class="btn ghost file-btn">بازیابی از فایل<input type="file" id="import-json" accept="application/json,.json"></label>
+        </div>
+      </div>
+      <div class="card">
+        <h3>قواعد احتساب مواعد</h3>
+        <ul class="rule-list" id="counting-rules"></ul>
+      </div>
+      <div class="card">
+        <h3>مهلت‌های پوشش‌داده‌شده</h3>
+        <ul class="rule-list" id="all-rules"></ul>
+      </div>
+      <div class="card disclaimer">
+        <h3>سلب مسئولیت</h3>
+        <p id="disclaimer-text"></p>
+      </div>
+      <div class="card">
+        <h3>حریم خصوصی</h3>
+        <p>این برنامه هیچ سرور، حساب کاربری، آمارگیر یا ارتباط اینترنتی ندارد. اطلاعات پرونده‌ها و موکلان فقط در حافظه همین مرورگر/دستگاه ذخیره می‌شود. با پاک کردن داده‌های مرورگر یا حذف برنامه، اطلاعات پاک می‌شود.</p>
+      </div>
+      <p class="ver">نسخه <span id="app-ver"></span></p>
+    </section>
+  </main>
+
+  <nav class="tabbar" id="tabbar">
+    <button data-tab="calc" aria-current="page"><svg viewBox="0 0 24 24"><path d="M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 2v4h10V4zm1 7v2h2v-2zm3 0v2h2v-2zm3 0v2h2v-2zm-6 3v2h2v-2zm3 0v2h2v-2zm3 0v5h2v-5zm-6 3v2h2v-2zm3 0v2h2v-2z"/></svg><span>محاسبه</span></button>
+    <button data-tab="cases"><svg viewBox="0 0 24 24"><path d="M10 4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg><span>پرونده‌ها</span><b class="badge" id="badge" hidden></b></button>
+    <button data-tab="holidays"><svg viewBox="0 0 24 24"><path d="M7 2v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2zM5 9h14v11H5zm2 2v3h3v-3z"/></svg><span>تعطیلات</span></button>
+    <button data-tab="more"><svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 15h-2v-6h2zm0-8h-2V7h2z"/></svg><span>راهنما</span></button>
+  </nav>
+
+  <dialog id="picker" class="sheet" aria-label="انتخاب تاریخ"></dialog>
+  <dialog id="case-dialog" class="sheet" aria-label="پرونده"></dialog>
+  <dialog id="welcome" class="sheet"></dialog>
+  <div id="toast" role="status" hidden></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
